@@ -47,6 +47,67 @@ theme: {
 
 Локальные пути не требуют сборки: просто загрузите `images/board-dark.jpg` и укажите его в `board-data.js`.
 
+## Размеры материалов
+
+Размер задаётся прямо в объекте материала. Старое поле `width` и старое `ratio` продолжают работать.
+
+```js
+{
+  id: 'wide-photo', material: 'image', mode: 'framed',
+  image: 'images/wide.jpg',
+  x: 140, y: 180,
+  width: '280px', height: '180px',
+  framePadding: '12px', fit: 'cover', objectPosition: 'center 40%',
+  caption: 'Горизонтальный снимок'
+}
+```
+
+- `width` и `height` принимают число (пиксели) или CSS-значение: `'280px'`, `'22vw'`, `'auto'`.
+- Если задан только `width`, используйте `aspectRatio: '4 / 3'` (старое имя `ratio` тоже поддерживается).
+- `fit` передаётся в `object-fit`: обычно `cover` для заполнения области или `contain` для полного изображения без обрезки.
+- `objectPosition` передаётся в `object-position`, например `'center top'`, `'left 30%'`.
+- `framePadding` задаёт внутренний отступ рамки; старое поле `padding` остаётся совместимым.
+- `caption` и `meta` остаются под изображением внутри рамки.
+
+Крупные изображения сжимаются до заданной области через `width/height`; маленькие масштабируются без искажения, потому что сохраняют пропорции через `aspectRatio` и `object-fit`.
+
+### Portrait и landscape рамки
+
+Для горизонтального кадра задайте `width: '280px', height: '180px', aspectRatio: '14 / 9'`. Для вертикального — `width: '170px', height: '250px', aspectRatio: '17 / 25'`. У `polaroid` рамка оборачивает именно заданную область изображения, а подпись остаётся внутри белого нижнего поля:
+
+```js
+{
+  id: 'portrait-polaroid', material: 'polaroid',
+  image: 'images/portrait.jpg',
+  width: '170px', height: '250px',
+  fit: 'contain', objectPosition: 'center',
+  framePadding: '10px',
+  caption: 'Свидетель', meta: 'плёнка / 1994',
+  x: 760, y: 260, rotation: -4, pin: true
+}
+```
+
+## Обложка в reader
+
+Для `reader: 'panel'` добавьте `readerCover` в конфигурацию материала. Обложка автоматически скрыта, если объект отсутствует; при открытии материала передаются её `image`, размер, `fit` и `objectPosition`:
+
+```js
+{
+  id: 'panel-story', material: 'tape', text: 'ОТКРЫТЬ ДЕЛО',
+  href: 'stories/open-door.html', reader: 'panel',
+  readerTitle: 'Открытая дверь',
+  readerByline: 'Лев Орлов · рассказ 03',
+  readerCover: {
+    image: 'images/open-door-cover.jpg',
+    width: '100%', height: '220px',
+    fit: 'cover', objectPosition: 'center 30%'
+  },
+  readerBody: 'Первый абзац.\\n\\nВторой абзац.'
+}
+```
+
+Можно использовать относительный путь `images/open-door-cover.jpg` или локальный SVG/data URI. Для режима `reader: 'page'` обложка не нужна: материал просто переходит по `href`.
+
 ## Параметры BOARD_DATA
 
 Верхний объект имеет три поля:

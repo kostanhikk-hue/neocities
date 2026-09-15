@@ -11,6 +11,7 @@ const readerTitle = document.querySelector('#readerTitle');
 const readerByline = document.querySelector('#readerByline');
 const readerBody = document.querySelector('#readerBody');
 const readerPageLink = document.querySelector('#readerPageLink');
+const readerCover = document.querySelector('#readerCover');
 const view = { x: 0, y: 0, scale: 1, dragging: false, moved: false, startX: 0, startY: 0, originX: 0, originY: 0 };
 
 function visualMarkup(item) {
@@ -28,9 +29,10 @@ function escapeText(value = '') { return escapeAttribute(value).replace(/\n/g, '
 
 function cardMarkup(item) {
   const frame = item.frame ? `frame-${item.frame}` : '';
-  const styles = `left:${item.x}px;top:${item.y}px;width:${item.width || 210}px;--ratio:${item.ratio || 'auto'};--frame:${item.frame || '#f3eee1'};--padding:${item.padding || 8}px;transform:rotate(${item.rotation || 0}deg);z-index:${item.zIndex || 1};`;
+  const styles = `left:${item.x}px;top:${item.y}px;width:${cssSize(item.width, '210px')};height:${cssSize(item.height, 'auto')};--ratio:${item.aspectRatio || item.ratio || 'auto'};--frame:${item.frame || '#f3eee1'};--padding:${cssSize(item.framePadding ?? item.padding, '8px')};--fit:${item.fit || 'cover'};--object-position:${item.objectPosition || 'center'};transform:rotate(${item.rotation || 0}deg);z-index:${item.zIndex || 1};`;
   return `<article class="evidence-card material-${item.material} ${frame} mode-${item.mode || 'framed'}" data-id="${item.id}" tabindex="0" role="link" aria-label="${item.caption || 'Открыть улику'}" style="${styles}">${item.pin ? '<span class="pin" aria-hidden="true"></span>' : ''}${visualMarkup(item)}<div class="artifact-caption"><b>${item.caption || ''}</b><span>${item.meta || ''}</span></div></article>`;
 }
+function cssSize(value, fallback) { if (value === undefined || value === null || value === '') return fallback; return typeof value === 'number' ? `${value}px` : String(value); }
 
 function drawConnections() {
   const links = LINKS.concat(EVIDENCE.flatMap(item => (item.links || []).map(link => typeof link === 'string' ? { from: item.id, to: link } : { from: item.id, ...link })));
@@ -56,6 +58,9 @@ function openReader(item) {
   readerTitle.textContent = item.readerTitle || item.caption || 'Дело';
   readerByline.textContent = item.readerByline || item.readerMeta || item.meta || '';
   readerBody.textContent = item.readerBody || item.readerText || item.text || 'Текст рассказа пока не добавлен.';
+  const cover = item.readerCover || item.cover;
+  readerPanel.classList.toggle('has-reader-cover', Boolean(cover && cover.image));
+  if (cover && cover.image) { readerCover.src = cover.image; readerCover.alt = cover.alt || item.readerTitle || item.caption || ''; readerCover.style.width = cssSize(cover.width, '100%'); readerCover.style.height = cssSize(cover.height, 'auto'); readerCover.style.objectFit = cover.fit || 'cover'; readerCover.style.objectPosition = cover.objectPosition || 'center'; }
   readerPageLink.href = item.href || '#';
   readerPanel.classList.add('is-open'); readerPanel.setAttribute('aria-hidden', 'false'); document.body.classList.add('reader-is-open');
   readerPanel.querySelector('.reader-close').focus();
