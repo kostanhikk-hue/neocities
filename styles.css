@@ -1,5 +1,3 @@
-@import url('data:text/css,');
-
 :root {
   --board-color: #243b37; --board-texture: radial-gradient(rgba(201,190,151,.08) 1px, transparent 1.5px); --board-image: none; --board-size: 13px 13px; --reader-background: #d8d0bc; --reader-opacity: .78; --reader-text-color: #262720; --reader-accent: #8c3028; --reader-width: min(900px, calc(100vw - 48px));
   --ink: #20201d;
