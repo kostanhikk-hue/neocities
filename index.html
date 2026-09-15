@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Архив писателя: интерактивная доска расследования и рассказы.">
+  <title>АРХИВ // Лев Орлов</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main>
+    <section class="board-shell" aria-label="Интерактивная доска расследования">
+      <div class="board-toolbar">
+        <div class="toolbar-group">
+          <span class="toolbar-label">масштаб</span>
+          <button class="tool-button" id="zoomOut" type="button" aria-label="Уменьшить масштаб">−</button>
+          <output id="zoomValue" for="zoomOut zoomIn">100%</output>
+          <button class="tool-button" id="zoomIn" type="button" aria-label="Увеличить масштаб">+</button>
+        </div>
+        <div class="toolbar-hint"><span class="mouse-icon">✣</span> тяните доску · scroll для масштаба</div>
+        <button class="reset-button" id="resetView" type="button">сбросить вид <span>↺</span></button>
+      </div>
+      <div class="board-viewport" id="boardViewport" tabindex="0">
+        <div class="board-space" id="boardSpace">
+          <svg class="connections" id="connections" aria-hidden="true"></svg>
+          <div class="cards-layer" id="cardsLayer"></div>
+          <div class="board-stamp">ОРИГИНАЛ<br><small>ARCHIVE / 07</small></div>
+        </div>
+        <div class="board-help" id="boardHelp">перетащите, чтобы осмотреть доску<br><span>карточки открываются по клику</span></div>
+      </div>
+    </section>
+    <section class="reader-panel" id="readerPanel" aria-hidden="true" aria-labelledby="readerTitle">
+      <div class="reader-backdrop" data-reader-close></div>
+      <article class="reader-drawer" role="dialog" aria-modal="true">
+        <button class="reader-close" type="button" data-reader-close aria-label="Закрыть рассказ">×</button>
+        <p class="reader-kicker" id="readerByline"></p>
+        <h2 id="readerTitle"></h2>
+        <div class="reader-rule"></div>
+        <div class="reader-text" id="readerBody"></div>
+        <a class="reader-page-link" id="readerPageLink" href="#">открыть отдельную страницу ↗</a>
+      </article>
+    </section>
+
+  </main>
+
+  <script src="board-data.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
