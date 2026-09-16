@@ -23,16 +23,24 @@ function localized(value, fallback = '') {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return value ?? fallback;
   return value[language] ?? value.ru ?? value.en ?? fallback;
 }
+function localizedImage(image) {
+  const selected = localized(image, image);
+  if (typeof selected === 'string') return { src: selected };
+  if (!selected || typeof selected !== 'object') return selected;
+  const field = key => selected[key] ?? image.ru?.[key] ?? image.en?.[key] ?? '';
+  return { ...selected, src: field('src'), alt: field('alt') };
+}
 function localizedItem(item) {
   const result = { ...item };
-  ['text', 'caption', 'meta', 'href', 'readerTitle', 'readerByline', 'readerBody', 'readerText', 'readerMeta'].forEach(key => { if (key in result) result[key] = localized(result[key]); });
-  if (result.image && typeof result.image === 'object') result.image = { ...result.image, src: localized(result.image.src, result.image.src) };
+  ['text', 'caption', 'meta', 'alt', 'href', 'readerTitle', 'readerByline', 'readerBody', 'readerText', 'readerMeta'].forEach(key => { if (key in result) result[key] = localized(result[key]); });
+  if (result.image) result.image = localizedImage(result.image);
   return result;
 }
 function localizedCover(cover) {
-  const result = localized(cover, cover);
-  if (!result || typeof result !== 'object') return result;
-  return { ...result, image: localized(result.image, result.image), alt: localized(result.alt, result.alt) };
+  if (typeof cover === 'string') return { image: cover };
+  const selected = localized(cover, cover);
+  if (!selected || typeof selected !== 'object') return selected;
+  return { ...cover, ...selected, image: localizedImage(selected.image), alt: localized(selected.alt, localized(selected.alt, '')) };
 }
 function currentUI() { return UI[language] || UI.ru || UI.en || {}; }
 function applyLanguageUI() {
@@ -59,7 +67,7 @@ function visualMarkup(item) {
   if (item.material === 'manuscript') return `<div class="artifact-art manuscript-art"><span>${item.text.replace(/\n/g, '<br>')}</span><i></i><i></i><b>Л.О.</b></div>`;
   if (item.material === 'cover') { const labels = currentUI(); return `<div class="artifact-art cover-art"><small>${escapeText(labels.author)}</small><strong>${item.text.replace(/\n/g, '<br>')}</strong><em>${escapeText(labels.story)}</em></div>`; }
   const image = typeof item.image === 'object' ? item.image : { src: item.image };
-  if (image.src) return `<img class="artifact-art source-image" src="${escapeAttribute(image.src)}" alt="${escapeAttribute(image.alt || item.caption)}" draggable="false">`;
+  if (image.src) return `<img class="artifact-art source-image" src="${escapeAttribute(image.src)}" alt="${escapeAttribute(image.alt || item.alt || item.caption)}" draggable="false">`;
   return '';
 }
 
@@ -125,8 +133,9 @@ function openReader(item) {
   readerByline.textContent = item.readerByline || item.readerMeta || item.meta || '';
   readerBody.textContent = item.readerBody || item.readerText || item.text || 'Текст рассказа пока не добавлен.';
   const cover = localizedCover(item.readerCover || item.cover);
-  readerPanel.classList.toggle('has-reader-cover', Boolean(cover && cover.image));
-  if (cover && cover.image) { readerCover.src = cover.image; readerCover.alt = cover.alt || item.readerTitle || item.caption || ''; readerCover.style.width = cssSize(cover.width, '100%'); readerCover.style.height = cssSize(cover.height, 'auto'); readerCover.style.objectFit = cover.fit || 'cover'; readerCover.style.objectPosition = cover.objectPosition || 'center'; }
+  const coverImage = cover && localizedImage(cover.image);
+  readerPanel.classList.toggle('has-reader-cover', Boolean(coverImage && coverImage.src));
+  if (coverImage && coverImage.src) { readerCover.src = coverImage.src; readerCover.alt = coverImage.alt || cover.alt || item.readerTitle || item.caption || ''; readerCover.style.width = cssSize(cover.width, '100%'); readerCover.style.height = cssSize(cover.height, 'auto'); readerCover.style.objectFit = cover.fit || 'cover'; readerCover.style.objectPosition = cover.objectPosition || 'center'; }
   readerPageLink.href = item.href || '#'; readerPageLink.textContent = labels.pageLink || 'open separate page ↗';
   readerPanel.classList.add('is-open'); readerPanel.setAttribute('aria-hidden', 'false'); document.body.classList.add('reader-is-open');
   readerPanel.querySelector('.reader-close').focus();
