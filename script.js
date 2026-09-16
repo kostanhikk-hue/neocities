@@ -1,4 +1,4 @@
-const { board: BOARD, theme: THEME, evidence: EVIDENCE, links: LINKS, ui: UI } = window.BOARD_DATA;
+const { board: BOARD, theme: THEME, evidence: EVIDENCE, links: LINKS, ui: UI, translations: TRANSLATIONS = {}, imageTranslations: IMAGE_TRANSLATIONS = {} } = window.BOARD_DATA;
 const LANGUAGE_CONFIG = window.BOARD_DATA.language || {};
 let language = 'ru';
 
@@ -31,9 +31,10 @@ function localizedImage(image) {
   return { ...selected, src: field('src'), alt: field('alt') };
 }
 function localizedItem(item) {
-  const result = { ...item };
+  const result = { ...item, ...(TRANSLATIONS[language]?.[item.id] || {}) };
   ['text', 'caption', 'meta', 'alt', 'href', 'readerTitle', 'readerByline', 'readerBody', 'readerText', 'readerMeta'].forEach(key => { if (key in result) result[key] = localized(result[key]); });
-  if (result.image) result.image = localizedImage(result.image);
+  if (IMAGE_TRANSLATIONS[item.id]) result.image = localizedImage(IMAGE_TRANSLATIONS[item.id]);
+  else if (result.image) result.image = localizedImage(result.image);
   return result;
 }
 function localizedCover(cover) {
@@ -64,7 +65,7 @@ function visualMarkup(item) {
   if (item.material === 'tape' || item.material === 'label') return `<div class="artifact-art tape-art texture-${item.texture || 'paper'}" style="--tape-color:${item.color || '#b18b4a'}"><span>${escapeText(item.text)}</span></div>`;
   if (item.material === 'marker') return `<div class="artifact-art marker-art"><strong>${item.text.replace(/\n/g, '<br>')}</strong></div>`;
   if (item.material === 'clipping') return `<div class="artifact-art clipping-art"><strong>${item.text.replace(/\n/g, '<br>')}</strong><i></i><i></i><i></i></div>`;
-  if (item.material === 'manuscript') return `<div class="artifact-art manuscript-art"><span>${item.text.replace(/\n/g, '<br>')}</span><i></i><i></i><b>Л.О.</b></div>`;
+  if (item.material === 'manuscript') return `<div class="artifact-art manuscript-art"><span>${item.text.replace(/\n/g, '<br>')}</span><i></i><i></i><b>${language === 'en' ? 'L.O.' : 'Л.О.'}</b></div>`;
   if (item.material === 'cover') { const labels = currentUI(); return `<div class="artifact-art cover-art"><small>${escapeText(labels.author)}</small><strong>${item.text.replace(/\n/g, '<br>')}</strong><em>${escapeText(labels.story)}</em></div>`; }
   const image = typeof item.image === 'object' ? item.image : { src: item.image };
   if (image.src) return `<img class="artifact-art source-image" src="${escapeAttribute(image.src)}" alt="${escapeAttribute(image.alt || item.alt || item.caption)}" draggable="false">`;
