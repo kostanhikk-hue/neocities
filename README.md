@@ -47,6 +47,151 @@ theme: {
 
 Локальные пути не требуют сборки: просто загрузите `images/board-dark.jpg` и укажите его в `board-data.js`.
 
+## Изображения и универсальные контейнеры
+
+Изображение больше не привязано к `polaroid`: у любого материала можно независимо настроить `image` и `frame`. Старые поля `mode`, `frame`, `padding`, `ratio`, `fit` и `objectPosition` продолжают работать.
+
+```js
+{
+  id: 'file-photo', material: 'image',
+  image: {
+    src: 'images/station.jpg',
+    fit: 'cover', objectPosition: 'center 35%', opacity: '.92',
+    filter: 'sepia(.25)', transform: 'rotate(-1deg)'
+  },
+  frame: { preset: 'file' },
+  x: 280, y: 180, width: '260px', height: '180px',
+  caption: 'Фото из дела', meta: 'вложение / 11'
+}
+```
+
+`image` может быть короткой строкой (`image: 'images/photo.jpg'`) или объектом с `src`, `alt`, `fit`, `objectPosition`, `opacity`, `filter`, `transform`. `frame` может быть именем пресета или объектом `{ preset, className, style }`. Доступны пресеты `plain`, `polaroid`, `photo-frame`, `newspaper`, `file`, `torn`. `plain` убирает оформление, остальные задают разные контейнеры.
+
+Для пользовательского контейнера используйте безопасный CSS-класс и разрешённые inline-свойства:
+
+```js
+frame: {
+  preset: 'plain',
+  className: 'my-metal-frame',
+  style: {
+    background: '#b7b0a0', border: '3px solid #4b5049',
+    borderRadius: '8px', padding: '10px',
+    boxShadow: '5px 7px 0 rgba(0,0,0,.3)',
+    clipPath: 'inset(0 round 8px)'
+  }
+}
+```
+
+Также поддерживаются короткие поля `frameClass` и `frameStyle`. Renderer применяет только свойства `background`, `border`, `borderRadius`, `padding`, `boxShadow`, `clipPath`, `mask`, `opacity` у рамки и `fit`, `objectPosition`, `opacity`, `filter`, `transform` у изображения. Значения с HTML/CSS-разметкой (`;`, `{}`, `<`, `>`) отбрасываются; классы проходят проверку имени. Это позволяет добавлять оформление без вставки HTML-атрибутов из данных.
+
+Размер `width`/`height` задаётся на карточке, а `image.fit` управляет заполнением области. Для горизонтальных и вертикальных кадров указывайте `height` и `aspectRatio`; `cover` обрежет лишнее, `contain` сохранит весь кадр. `objectPosition` вроде `center top` или `left 30%` управляет точкой обрезки.
+
+### Добавление CSS-пресета
+
+Добавьте класс в `styles.css`, затем включите его в whitelist `FRAME_PRESETS` в `script.js`, чтобы имя применялось как `frame-your-name`:
+
+```css
+.frame-enabled.frame-metal {
+  padding: 8px;
+  background: linear-gradient(#d7d2c5, #8c887c);
+  border: 2px solid #403f3a;
+  border-radius: 3px;
+  box-shadow: 5px 7px 0 rgba(0,0,0,.3);
+}
+```
+
+После этого используйте `frame: { preset: 'metal' }`. Псевдоэлементы, `clip-path` и `mask` задавайте в CSS-пресете, а не через HTML.
+
+## Выбор языка и переводы
+
+Перед доской показывается стартовый экран выбора языка. Выбор сохраняется в `localStorage`, поэтому при следующем входе экран пропускается. Ключ и язык по умолчанию настраиваются в `board-data.js`:
+
+```js
+language: { storageKey: 'archive-language', default: 'ru' }
+```
+
+Для перевода любого текстового поля используйте объект `{ ru: '...', en: '...' }`. Поддерживаются `text`, `caption`, `meta`, `href`, `readerTitle`, `readerByline`, `readerBody`, `readerText`, `readerMeta`, а также `image.alt` и `readerCover`:
+
+```js
+{
+  id: 'translated-case', material: 'tape',
+  text: { ru: 'ОТКРЫТЬ ДЕЛО', en: 'OPEN THE CASE' },
+  caption: { ru: 'Открытая дверь', en: 'The Open Door' },
+  meta: { ru: 'рассказ 03', en: 'story 03' },
+  href: { ru: 'stories/open-door.html', en: 'stories/open-door-en.html' },
+  reader: 'panel',
+  readerTitle: { ru: 'Открытая дверь', en: 'The Open Door' },
+  readerByline: { ru: 'Лев Орлов · рассказ 03', en: 'Lev Orlov · story 03' },
+  readerBody: { ru: 'Русский текст.', en: 'English text.' }
+}
+```
+
+При выборе языка renderer сначала берёт соответствующее значение, затем `ru`, затем `en`. Поэтому старые строки остаются рабочими, а неполный перевод безопасно отображает доступный вариант. В режиме `reader: 'panel'` переводятся inline cover/title/byline/body и ссылка на отдельную страницу. В режиме `reader: 'page'` используется локализованный `href`; подготовьте соответствующий HTML-файл рассказа для каждого языка.
+
+Данные интерфейса (`zoom`, подсказки, кнопки reader и language screen) находятся в `BOARD_DATA.ui.ru` и `BOARD_DATA.ui.en`. Для сброса сохранённого выбора удалите ключ `archive-language` в DevTools или вызовите `localStorage.removeItem('archive-language')`.
+
+## Размеры материалов
+
+Размер задаётся прямо в объекте материала. Старое поле `width` и старое `ratio` продолжают работать.
+
+```js
+{
+  id: 'wide-photo', material: 'image', mode: 'framed',
+  image: 'images/wide.jpg',
+  x: 140, y: 180,
+  width: '280px', height: '180px',
+  frame: { preset: 'photo-frame' }, framePadding: '12px',
+  fit: 'cover', objectPosition: 'center 40%',
+  caption: 'Горизонтальный снимок'
+}
+```
+
+- `width` и `height` принимают число (пиксели) или CSS-значение: `'280px'`, `'22vw'`, `'auto'`.
+- Если задан только `width`, используйте `aspectRatio: '4 / 3'` (старое имя `ratio` тоже поддерживается).
+- `fit` передаётся в `object-fit`: обычно `cover` для заполнения области или `contain` для полного изображения без обрезки.
+- `objectPosition` передаётся в `object-position`, например `'center top'`, `'left 30%'`.
+- `framePadding` задаёт внутренний отступ рамки; старое поле `padding` остаётся совместимым.
+- `caption` и `meta` остаются под изображением внутри рамки.
+
+Крупные изображения сжимаются до заданной области через `width/height`; маленькие масштабируются без искажения, потому что сохраняют пропорции через `aspectRatio` и `object-fit`.
+
+### Portrait и landscape рамки
+
+Для горизонтального кадра задайте `width: '280px', height: '180px', aspectRatio: '14 / 9'`. Для вертикального — `width: '170px', height: '250px', aspectRatio: '17 / 25'`. У `polaroid` рамка оборачивает именно заданную область изображения, а подпись остаётся внутри белого нижнего поля:
+
+```js
+{
+  id: 'portrait-polaroid', material: 'polaroid',
+  image: 'images/portrait.jpg',
+  width: '170px', height: '250px',
+  fit: 'contain', objectPosition: 'center',
+  framePadding: '10px',
+  caption: 'Свидетель', meta: 'плёнка / 1994',
+  x: 760, y: 260, rotation: -4, pin: true
+}
+```
+
+## Обложка в reader
+
+Для `reader: 'panel'` добавьте `readerCover` в конфигурацию материала. Обложка автоматически скрыта, если объект отсутствует; при открытии материала передаются её `image`, размер, `fit` и `objectPosition`:
+
+```js
+{
+  id: 'panel-story', material: 'tape', text: 'ОТКРЫТЬ ДЕЛО',
+  href: 'stories/open-door.html', reader: 'panel',
+  readerTitle: 'Открытая дверь',
+  readerByline: 'Лев Орлов · рассказ 03',
+  readerCover: {
+    image: 'images/open-door-cover.jpg',
+    width: '100%', height: '220px',
+    fit: 'cover', objectPosition: 'center 30%'
+  },
+  readerBody: 'Первый абзац.\\n\\nВторой абзац.'
+}
+```
+
+Можно использовать относительный путь `images/open-door-cover.jpg` или локальный SVG/data URI. Для режима `reader: 'page'` обложка не нужна: материал просто переходит по `href`.
+
 ## Параметры BOARD_DATA
 
 Верхний объект имеет три поля:
@@ -87,10 +232,11 @@ theme: {
 
 ### `image`
 
-Изображение. Поддерживает два режима:
+Изображение поддерживает обычный вариант без рамки и независимые контейнеры:
 
-- `mode: 'plain'` — изображение без рамки, только с булавкой. Подходит для фотографии, карты или скана.
-- `mode: 'framed'` — изображение в рамке. Используйте `frame`, `padding` и `ratio`.
+- `frame: { preset: 'plain' }` — изображение без рамки, только с булавкой.
+- `frame: { preset: 'photo-frame' }` — изображение в оформленном контейнере.
+- `mode: 'plain'` и `mode: 'framed'` — совместимый старый синтаксис.
 
 Пути должны быть относительными к `board-data.js`, например `images/station.jpg` или `../images/station.jpg` из подпапки. Для локальной демонстрации можно использовать `data:image/svg+xml,...`, как в примере ниже.
 
@@ -98,7 +244,7 @@ theme: {
 
 - `image`: путь к локальному JPG/PNG/SVG или data URI.
 - `mode`: `plain` или `framed`.
-- `frame`: цвет рамки CSS, например `'#f3eee1'`.
+- `frame`: пресет или объект пресета; старое значение-цвет поддерживается как фон рамки.
 - `padding`: размер внутренней рамки в пикселях, например `12`.
 - `ratio`: CSS-соотношение сторон, например `'4/3'`, `'3/2'` или `'1/1'`.
 
