@@ -1,4 +1,6 @@
-const { board: BOARD, theme: THEME, evidence: EVIDENCE, links: LINKS } = window.BOARD_DATA;
+const { board: BOARD, theme: THEME, evidence: EVIDENCE, links: LINKS, ui: UI } = window.BOARD_DATA;
+const LANGUAGE_CONFIG = window.BOARD_DATA.language || {};
+let language = 'ru';
 
 const boardViewport = document.querySelector('#boardViewport');
 const boardSpace = document.querySelector('#boardSpace');
@@ -12,14 +14,50 @@ const readerByline = document.querySelector('#readerByline');
 const readerBody = document.querySelector('#readerBody');
 const readerPageLink = document.querySelector('#readerPageLink');
 const readerCover = document.querySelector('#readerCover');
+const languageScreen = document.querySelector('#languageScreen');
+const languageTitle = document.querySelector('#languageTitle');
+const languagePrompt = document.querySelector('#languagePrompt');
 const view = { x: 0, y: 0, scale: 1, dragging: false, moved: false, startX: 0, startY: 0, originX: 0, originY: 0 };
 
+function localized(value, fallback = '') {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return value ?? fallback;
+  return value[language] ?? value.ru ?? value.en ?? fallback;
+}
+function localizedItem(item) {
+  const result = { ...item };
+  ['text', 'caption', 'meta', 'href', 'readerTitle', 'readerByline', 'readerBody', 'readerText', 'readerMeta'].forEach(key => { if (key in result) result[key] = localized(result[key]); });
+  if (result.image && typeof result.image === 'object') result.image = { ...result.image, src: localized(result.image.src, result.image.src) };
+  return result;
+}
+function localizedCover(cover) {
+  const result = localized(cover, cover);
+  if (!result || typeof result !== 'object') return result;
+  return { ...result, image: localized(result.image, result.image), alt: localized(result.alt, result.alt) };
+}
+function currentUI() { return UI[language] || UI.ru || UI.en || {}; }
+function applyLanguageUI() {
+  const labels = currentUI(); document.documentElement.lang = language;
+  document.title = language === 'en' ? 'ARCHIVE // Lev Orlov' : 'АРХИВ // Лев Орлов'; document.querySelector('#boardShell').setAttribute('aria-label', labels.board || 'Interactive investigation board'); document.querySelector('#zoomOut').setAttribute('aria-label', labels.zoomOut || 'Zoom out'); document.querySelector('#zoomIn').setAttribute('aria-label', labels.zoomIn || 'Zoom in');
+  languageTitle.textContent = labels.languageTitle || 'Choose a language'; languagePrompt.textContent = labels.languagePrompt || '';
+  document.querySelector('.toolbar-label').textContent = labels.zoom || 'zoom'; document.querySelector('#toolbarHint').lastChild.textContent = ` ${labels.hint || ''}`;
+  document.querySelector('#resetView').firstChild.textContent = `${labels.reset || 'reset view'} `;
+  document.querySelector('#boardHelp').firstChild.textContent = labels.help || ''; document.querySelector('#boardHelp span').textContent = labels.helpCards || '';
+  document.querySelector('#boardStamp').firstChild.textContent = `${labels.stamp || ''}`; document.querySelector('.reader-close').setAttribute('aria-label', labels.close || 'Close story'); readerPageLink.textContent = labels.pageLink || 'open separate page ↗';
+}
+function startBoard(selected) {
+  language = selected === 'en' ? 'en' : 'ru';
+  try { localStorage.setItem(LANGUAGE_CONFIG.storageKey || 'archive-language', language); } catch (error) { /* localStorage may be unavailable on file:// */ }
+  applyLanguageUI(); languageScreen.classList.add('is-hidden'); document.body.classList.remove('language-pending'); render();
+}
+document.querySelectorAll('[data-language]').forEach(button => button.addEventListener('click', () => startBoard(button.dataset.language)));
+
 function visualMarkup(item) {
+  item = localizedItem(item);
   if (item.material === 'tape' || item.material === 'label') return `<div class="artifact-art tape-art texture-${item.texture || 'paper'}" style="--tape-color:${item.color || '#b18b4a'}"><span>${escapeText(item.text)}</span></div>`;
   if (item.material === 'marker') return `<div class="artifact-art marker-art"><strong>${item.text.replace(/\n/g, '<br>')}</strong></div>`;
   if (item.material === 'clipping') return `<div class="artifact-art clipping-art"><strong>${item.text.replace(/\n/g, '<br>')}</strong><i></i><i></i><i></i></div>`;
   if (item.material === 'manuscript') return `<div class="artifact-art manuscript-art"><span>${item.text.replace(/\n/g, '<br>')}</span><i></i><i></i><b>Л.О.</b></div>`;
-  if (item.material === 'cover') return `<div class="artifact-art cover-art"><small>ЛЕВ ОРЛОВ</small><strong>${item.text.replace(/\n/g, '<br>')}</strong><em>рассказ</em></div>`;
+  if (item.material === 'cover') { const labels = currentUI(); return `<div class="artifact-art cover-art"><small>${escapeText(labels.author)}</small><strong>${item.text.replace(/\n/g, '<br>')}</strong><em>${escapeText(labels.story)}</em></div>`; }
   const image = typeof item.image === 'object' ? item.image : { src: item.image };
   if (image.src) return `<img class="artifact-art source-image" src="${escapeAttribute(image.src)}" alt="${escapeAttribute(image.alt || item.caption)}">`;
   return '';
@@ -29,6 +67,7 @@ function escapeAttribute(value = '') { return String(value).replace(/&/g, '&amp;
 function escapeText(value = '') { return escapeAttribute(value).replace(/\n/g, '<br>'); }
 
 function cardMarkup(item) {
+  item = localizedItem(item);
   const frame = frameConfig(item);
   const frameClass = item.image || item.material === 'polaroid' ? `frame-enabled frame-${frame.preset} ${safeClasses(frame.className)}` : '';
   return `<article class="evidence-card material-${item.material} ${frameClass} mode-${item.mode || 'framed'}" data-id="${escapeAttribute(item.id)}" tabindex="0" role="link" aria-label="${escapeAttribute(item.caption || 'Открыть улику')}">${item.pin ? '<span class="pin" aria-hidden="true"></span>' : ''}${visualMarkup(item)}<div class="artifact-caption"><b>${escapeText(item.caption)}</b><span>${escapeText(item.meta)}</span></div></article>`;
@@ -80,18 +119,20 @@ function setZoom(next, focalX = boardViewport.clientWidth / 2, focalY = boardVie
 }
 function resetView() { view.x = 0; view.y = 0; view.scale = 1; updateView(); }
 function openReader(item) {
+  item = localizedItem(item);
+  const labels = currentUI();
   readerTitle.textContent = item.readerTitle || item.caption || 'Дело';
   readerByline.textContent = item.readerByline || item.readerMeta || item.meta || '';
   readerBody.textContent = item.readerBody || item.readerText || item.text || 'Текст рассказа пока не добавлен.';
-  const cover = item.readerCover || item.cover;
+  const cover = localizedCover(item.readerCover || item.cover);
   readerPanel.classList.toggle('has-reader-cover', Boolean(cover && cover.image));
   if (cover && cover.image) { readerCover.src = cover.image; readerCover.alt = cover.alt || item.readerTitle || item.caption || ''; readerCover.style.width = cssSize(cover.width, '100%'); readerCover.style.height = cssSize(cover.height, 'auto'); readerCover.style.objectFit = cover.fit || 'cover'; readerCover.style.objectPosition = cover.objectPosition || 'center'; }
-  readerPageLink.href = item.href || '#';
+  readerPageLink.href = item.href || '#'; readerPageLink.textContent = labels.pageLink || 'open separate page ↗';
   readerPanel.classList.add('is-open'); readerPanel.setAttribute('aria-hidden', 'false'); document.body.classList.add('reader-is-open');
   readerPanel.querySelector('.reader-close').focus();
 }
 function closeReader() { readerPanel.classList.remove('is-open'); readerPanel.setAttribute('aria-hidden', 'true'); document.body.classList.remove('reader-is-open'); }
-function openCard(item) { if (!item.href || item.href === '#') return; if (item.reader === 'panel') openReader(item); else window.location.href = item.href; }
+function openCard(item) { item = localizedItem(item); if (!item.href || item.href === '#') return; if (item.reader === 'panel') openReader(item); else window.location.href = item.href; }
 function bindCards() { cardsLayer.querySelectorAll('.evidence-card').forEach(card => { const item = EVIDENCE.find(entry => entry.id === card.dataset.id); card.addEventListener('click', () => { if (!view.moved) openCard(item); }); card.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openCard(item); } }); }); }
 
 document.querySelector('#zoomIn').addEventListener('click', () => setZoom(view.scale + .1));
@@ -105,4 +146,7 @@ boardViewport.addEventListener('keydown', event => { if (event.key.toLowerCase()
 readerPanel.querySelectorAll('[data-reader-close]').forEach(element => element.addEventListener('click', closeReader));
 document.addEventListener('keydown', event => { if (event.key === 'Escape' && readerPanel.classList.contains('is-open')) closeReader(); });
 setTimeout(() => boardHelp.classList.add('is-hidden'), 5000);
-render();
+applyLanguageUI();
+let savedLanguage = '';
+try { savedLanguage = localStorage.getItem(LANGUAGE_CONFIG.storageKey || 'archive-language') || ''; } catch (error) { savedLanguage = ''; }
+if (savedLanguage === 'ru' || savedLanguage === 'en') startBoard(savedLanguage);

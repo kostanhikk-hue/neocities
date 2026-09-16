@@ -102,6 +102,34 @@ frame: {
 
 После этого используйте `frame: { preset: 'metal' }`. Псевдоэлементы, `clip-path` и `mask` задавайте в CSS-пресете, а не через HTML.
 
+## Выбор языка и переводы
+
+Перед доской показывается стартовый экран выбора языка. Выбор сохраняется в `localStorage`, поэтому при следующем входе экран пропускается. Ключ и язык по умолчанию настраиваются в `board-data.js`:
+
+```js
+language: { storageKey: 'archive-language', default: 'ru' }
+```
+
+Для перевода любого текстового поля используйте объект `{ ru: '...', en: '...' }`. Поддерживаются `text`, `caption`, `meta`, `href`, `readerTitle`, `readerByline`, `readerBody`, `readerText`, `readerMeta`, а также `image.alt` и `readerCover`:
+
+```js
+{
+  id: 'translated-case', material: 'tape',
+  text: { ru: 'ОТКРЫТЬ ДЕЛО', en: 'OPEN THE CASE' },
+  caption: { ru: 'Открытая дверь', en: 'The Open Door' },
+  meta: { ru: 'рассказ 03', en: 'story 03' },
+  href: { ru: 'stories/open-door.html', en: 'stories/open-door-en.html' },
+  reader: 'panel',
+  readerTitle: { ru: 'Открытая дверь', en: 'The Open Door' },
+  readerByline: { ru: 'Лев Орлов · рассказ 03', en: 'Lev Orlov · story 03' },
+  readerBody: { ru: 'Русский текст.', en: 'English text.' }
+}
+```
+
+При выборе языка renderer сначала берёт соответствующее значение, затем `ru`, затем `en`. Поэтому старые строки остаются рабочими, а неполный перевод безопасно отображает доступный вариант. В режиме `reader: 'panel'` переводятся inline cover/title/byline/body и ссылка на отдельную страницу. В режиме `reader: 'page'` используется локализованный `href`; подготовьте соответствующий HTML-файл рассказа для каждого языка.
+
+Данные интерфейса (`zoom`, подсказки, кнопки reader и language screen) находятся в `BOARD_DATA.ui.ru` и `BOARD_DATA.ui.en`. Для сброса сохранённого выбора удалите ключ `archive-language` в DevTools или вызовите `localStorage.removeItem('archive-language')`.
+
 ## Размеры материалов
 
 Размер задаётся прямо в объекте материала. Старое поле `width` и старое `ratio` продолжают работать.

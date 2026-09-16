@@ -7,9 +7,20 @@
   <title>АРХИВ // Лев Орлов</title>
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+  <body class="language-pending">
+  <section class="language-screen" id="languageScreen" aria-labelledby="languageTitle">
+    <div class="language-card">
+      <span class="brand-kicker">ARCHIVE / 07</span>
+      <h1 id="languageTitle">Выберите язык</h1>
+      <p id="languagePrompt">Перед входом на доску выберите язык архива.</p>
+      <div class="language-options" role="group" aria-label="Выбор языка">
+        <button type="button" data-language="ru">Русский</button>
+        <button type="button" data-language="en">English</button>
+      </div>
+    </div>
+  </section>
   <main>
-    <section class="board-shell" aria-label="Интерактивная доска расследования">
+    <section class="board-shell" id="boardShell" aria-label="Интерактивная доска расследования">
       <div class="board-toolbar">
         <div class="toolbar-group">
           <span class="toolbar-label">масштаб</span>
@@ -17,16 +28,16 @@
           <output id="zoomValue" for="zoomOut zoomIn">100%</output>
           <button class="tool-button" id="zoomIn" type="button" aria-label="Увеличить масштаб">+</button>
         </div>
-        <div class="toolbar-hint"><span class="mouse-icon">✣</span> тяните доску · scroll для масштаба</div>
+        <div class="toolbar-hint" id="toolbarHint"><span class="mouse-icon">✣</span> тяните доску · scroll для масштаба</div>
         <button class="reset-button" id="resetView" type="button">сбросить вид <span>↺</span></button>
       </div>
       <div class="board-viewport" id="boardViewport" tabindex="0">
         <div class="board-space" id="boardSpace">
           <svg class="connections" id="connections" aria-hidden="true"></svg>
           <div class="cards-layer" id="cardsLayer"></div>
-          <div class="board-stamp">ОРИГИНАЛ<br><small>ARCHIVE / 07</small></div>
+         <div class="board-stamp" id="boardStamp">ОРИГИНАЛ<br><small>ARCHIVE / 07</small></div>
         </div>
-        <div class="board-help" id="boardHelp">перетащите, чтобы осмотреть доску<br><span>карточки открываются по клику</span></div>
+         <div class="board-help" id="boardHelp">перетащите, чтобы осмотреть доску<br><span>карточки открываются по клику</span></div>
       </div>
     </section>
     <section class="reader-panel" id="readerPanel" aria-hidden="true" aria-labelledby="readerTitle">
