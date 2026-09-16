@@ -14,6 +14,34 @@ window.BOARD_DATA = {
     board: { color: '#243b37', texture: 'radial-gradient(rgba(201,190,151,.08) 1px, transparent 1.5px), radial-gradient(rgba(0,0,0,.25) 1px, transparent 1.4px), repeating-linear-gradient(112deg, rgba(255,255,255,.018) 0 2px, transparent 2px 9px)', image: '', size: '13px 13px, 19px 19px, 37px 37px' },
     reader: { background: '#d8d0bc', opacity: '.78', textColor: '#262720', accent: '#8c3028', width: 'min(900px, calc(100vw - 48px))' }
   },
+  translations: {
+    en: {
+      'plain-window': { caption: 'Light on the third floor', meta: 'photo 08 / unframed' },
+      'framed-map': { caption: 'Route map', meta: 'frame / archive 07' },
+      receipt: { text: 'EVENING NEWS\n\nTwo cups. One person. Time: 22:41. The waitress says the second voice kept answering after the guest left.', caption: 'Receipt from the North', meta: 'found on the back of a letter' },
+      'blue-note': { text: 'Do not look for the door.\n\nLook for the one who once left it open.', caption: 'L.O. handwriting', meta: 'sheet 04 / draft' },
+      witness: { text: 'She heard the sea,\nthough the sea was\nthree hundred kilometres away.', caption: 'witness statement 04', meta: 'voice recording / 00:48' },
+      map: { text: 'ROUTE MAP\n\nWhere the streetlamps come on before evening falls.', caption: 'point of disappearance', meta: 'coordinates encrypted' },
+      key: { caption: 'Someone else’s key', meta: 'unidentified exhibit' },
+      'file-photo': { caption: 'Surveillance file', meta: 'attachment / 11' },
+      'red-thread': { text: 'Look here', caption: 'priority: high', meta: 'three matches' },
+      'tape-red': { text: 'DO NOT FORGET: ask about the streetlamp' },
+      'label-ochre': { text: 'ARCHIVE 07 / DO NOT TOUCH' },
+      postcard: { text: 'THE OPEN\nDOOR', caption: 'no return address', meta: 'postcard / 1987' },
+      voice: { text: '“Hello?”\n\nA pause. Three knocks. The sound of water.', caption: 'transcription', meta: 'cassette B / excerpt' },
+      matchbook: { caption: 'matchbook', meta: 'Mayak Hotel' },
+      newspaper: { text: 'THE MAN WITHOUT A SHADOW\n\nWitnesses swear: he went in, but never came out.', caption: 'evening edition', meta: 'newspaper / p. 6' },
+      'long-clipping': { text: 'ARCHIVE REPORT\n\nAt 03:17, a ticket with no destination was found on the north platform. Only one name was written on its back. The paper smelled of rain and smoke.', caption: 'long clipping', meta: 'archive / sheet 12' },
+      cover: { text: 'THE LAST\nTRAIN', caption: 'story cover', meta: 'Lev Orlov' },
+      'panel-story': { readerByline: 'Lev Orlov · case 07 / story 03' }
+    }
+  },
+  imageTranslations: {
+    'plain-window': { ru: { src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 280"><rect width="420" height="280" fill="%23142120"/><rect x="60" y="35" width="250" height="210" fill="%23d2a45e"/><text x="90" y="265" fill="%23efe1a7" font-size="18">СВЕТ</text></svg>' }, en: { src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 280"><rect width="420" height="280" fill="%23142120"/><rect x="60" y="35" width="250" height="210" fill="%235a7892"/><text x="90" y="265" fill="%23efe1a7" font-size="18">LIGHT</text></svg>' } },
+    'framed-map': { ru: { src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" fill="%23ddc88f"/><path d="M35 325 120 70l88 125 76-90 82 220" fill="none" stroke="%237b392f" stroke-width="8"/><text x="45" y="50" fill="%237b392f" font-size="22">МАРШРУТ</text></svg>' }, en: { src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" fill="%23ddc88f"/><path d="M35 325 120 70l88 125 76-90 82 220" fill="none" stroke="%237b392f" stroke-width="8"/><text x="45" y="50" fill="%237b392f" font-size="22">ROUTE</text></svg>' } },
+    key: { ru: { src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 350"><rect width="500" height="350" fill="%23766b58"/><path d="M100 250c0-90 80-150 160-80l100 80v50H100Z" fill="%23d5c08b"/><text x="145" y="55" fill="%23f3eee1" font-size="22">КЛЮЧ</text></svg>' }, en: { src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 350"><rect width="500" height="350" fill="%23475d73"/><path d="M100 250c0-90 80-150 160-80l100 80v50H100Z" fill="%23e1c98e"/><text x="170" y="55" fill="%23f3eee1" font-size="22">KEY</text></svg>' } },
+    'file-photo': { ru: { src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 260"><rect width="400" height="260" fill="%232f4c45"/><path d="M0 220 120 105l80 55 92-115 108 175v40H0Z" fill="%237d9a7c"/><text x="20" y="35" fill="%23efe9dc" font-size="18">ФАЙЛ</text></svg>' }, en: { src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 260"><rect width="400" height="260" fill="%232f4c45"/><path d="M0 220 120 105l80 55 92-115 108 175v40H0Z" fill="%237d9a7c"/><text x="20" y="35" fill="%23efe9dc" font-size="18">FILE</text></svg>' } }
+  },
   evidence: [
     { id: 'platform-9', material: 'polaroid', image: { ru: { src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 350"><rect width="500" height="350" fill="%2326312e"/><path d="M0 245 160 120l90 60 95-140 155 205v105H0Z" fill="%236d806f"/><path d="M300 80h16v220h-16z" fill="%23c49b65"/><circle cx="393" cy="70" r="30" fill="%23d8bd78"/></svg>', alt: 'Платформа №9, вечерний снимок' }, en: { src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 350"><rect width="500" height="350" fill="%231c3040"/><path d="M0 245 160 120l90 60 95-140 155 205v105H0Z" fill="%235a7892"/><path d="M300 80h16v220h-16z" fill="%23d0a66c"/><circle cx="393" cy="70" r="30" fill="%23e3c878"/></svg>', alt: 'Platform 9, evening photograph' } }, caption: { ru: 'Платформа №9', en: 'Platform 9' }, meta: { ru: 'дело «Последний поезд»', en: 'case “The Last Train”' }, x: 100, y: 170, width: 205, ratio: '4/3', rotation: -4, zIndex: 2, pin: true, href: { ru: 'stories/last-train.html', en: 'stories/last-train-en.html' } },
     { id: 'plain-window', material: 'image', frame: { preset: 'plain' }, image: { src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 280"><rect width="420" height="280" fill="%23142120"/><rect x="60" y="35" width="250" height="210" fill="%23d2a45e" opacity=".8"/><rect x="80" y="55" width="210" height="170" fill="%231f3b3a"/><path d="M130 224V90h80v134" fill="%23443934"/><circle cx="355" cy="56" r="34" fill="%23e7d29b" opacity=".65"/></svg>' }, caption: 'Свет на третьем', meta: 'фото 08 / без рамки', x: 360, y: 250, width: 250, ratio: '3/2', rotation: 6, zIndex: 1, pin: true, href: { ru: 'stories/early-lights.html', en: 'stories/early-lights-en.html' } },
