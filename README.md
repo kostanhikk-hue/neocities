@@ -47,6 +47,61 @@ theme: {
 
 Локальные пути не требуют сборки: просто загрузите `images/board-dark.jpg` и укажите его в `board-data.js`.
 
+## Изображения и универсальные контейнеры
+
+Изображение больше не привязано к `polaroid`: у любого материала можно независимо настроить `image` и `frame`. Старые поля `mode`, `frame`, `padding`, `ratio`, `fit` и `objectPosition` продолжают работать.
+
+```js
+{
+  id: 'file-photo', material: 'image',
+  image: {
+    src: 'images/station.jpg',
+    fit: 'cover', objectPosition: 'center 35%', opacity: '.92',
+    filter: 'sepia(.25)', transform: 'rotate(-1deg)'
+  },
+  frame: { preset: 'file' },
+  x: 280, y: 180, width: '260px', height: '180px',
+  caption: 'Фото из дела', meta: 'вложение / 11'
+}
+```
+
+`image` может быть короткой строкой (`image: 'images/photo.jpg'`) или объектом с `src`, `alt`, `fit`, `objectPosition`, `opacity`, `filter`, `transform`. `frame` может быть именем пресета или объектом `{ preset, className, style }`. Доступны пресеты `plain`, `polaroid`, `photo-frame`, `newspaper`, `file`, `torn`. `plain` убирает оформление, остальные задают разные контейнеры.
+
+Для пользовательского контейнера используйте безопасный CSS-класс и разрешённые inline-свойства:
+
+```js
+frame: {
+  preset: 'plain',
+  className: 'my-metal-frame',
+  style: {
+    background: '#b7b0a0', border: '3px solid #4b5049',
+    borderRadius: '8px', padding: '10px',
+    boxShadow: '5px 7px 0 rgba(0,0,0,.3)',
+    clipPath: 'inset(0 round 8px)'
+  }
+}
+```
+
+Также поддерживаются короткие поля `frameClass` и `frameStyle`. Renderer применяет только свойства `background`, `border`, `borderRadius`, `padding`, `boxShadow`, `clipPath`, `mask`, `opacity` у рамки и `fit`, `objectPosition`, `opacity`, `filter`, `transform` у изображения. Значения с HTML/CSS-разметкой (`;`, `{}`, `<`, `>`) отбрасываются; классы проходят проверку имени. Это позволяет добавлять оформление без вставки HTML-атрибутов из данных.
+
+Размер `width`/`height` задаётся на карточке, а `image.fit` управляет заполнением области. Для горизонтальных и вертикальных кадров указывайте `height` и `aspectRatio`; `cover` обрежет лишнее, `contain` сохранит весь кадр. `objectPosition` вроде `center top` или `left 30%` управляет точкой обрезки.
+
+### Добавление CSS-пресета
+
+Добавьте класс в `styles.css`, затем включите его в whitelist `FRAME_PRESETS` в `script.js`, чтобы имя применялось как `frame-your-name`:
+
+```css
+.frame-enabled.frame-metal {
+  padding: 8px;
+  background: linear-gradient(#d7d2c5, #8c887c);
+  border: 2px solid #403f3a;
+  border-radius: 3px;
+  box-shadow: 5px 7px 0 rgba(0,0,0,.3);
+}
+```
+
+После этого используйте `frame: { preset: 'metal' }`. Псевдоэлементы, `clip-path` и `mask` задавайте в CSS-пресете, а не через HTML.
+
 ## Размеры материалов
 
 Размер задаётся прямо в объекте материала. Старое поле `width` и старое `ratio` продолжают работать.
@@ -57,7 +112,8 @@ theme: {
   image: 'images/wide.jpg',
   x: 140, y: 180,
   width: '280px', height: '180px',
-  framePadding: '12px', fit: 'cover', objectPosition: 'center 40%',
+  frame: { preset: 'photo-frame' }, framePadding: '12px',
+  fit: 'cover', objectPosition: 'center 40%',
   caption: 'Горизонтальный снимок'
 }
 ```
@@ -148,10 +204,11 @@ theme: {
 
 ### `image`
 
-Изображение. Поддерживает два режима:
+Изображение поддерживает обычный вариант без рамки и независимые контейнеры:
 
-- `mode: 'plain'` — изображение без рамки, только с булавкой. Подходит для фотографии, карты или скана.
-- `mode: 'framed'` — изображение в рамке. Используйте `frame`, `padding` и `ratio`.
+- `frame: { preset: 'plain' }` — изображение без рамки, только с булавкой.
+- `frame: { preset: 'photo-frame' }` — изображение в оформленном контейнере.
+- `mode: 'plain'` и `mode: 'framed'` — совместимый старый синтаксис.
 
 Пути должны быть относительными к `board-data.js`, например `images/station.jpg` или `../images/station.jpg` из подпапки. Для локальной демонстрации можно использовать `data:image/svg+xml,...`, как в примере ниже.
 
@@ -159,7 +216,7 @@ theme: {
 
 - `image`: путь к локальному JPG/PNG/SVG или data URI.
 - `mode`: `plain` или `framed`.
-- `frame`: цвет рамки CSS, например `'#f3eee1'`.
+- `frame`: пресет или объект пресета; старое значение-цвет поддерживается как фон рамки.
 - `padding`: размер внутренней рамки в пикселях, например `12`.
 - `ratio`: CSS-соотношение сторон, например `'4/3'`, `'3/2'` или `'1/1'`.
 

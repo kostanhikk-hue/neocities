@@ -20,19 +20,44 @@ function visualMarkup(item) {
   if (item.material === 'clipping') return `<div class="artifact-art clipping-art"><strong>${item.text.replace(/\n/g, '<br>')}</strong><i></i><i></i><i></i></div>`;
   if (item.material === 'manuscript') return `<div class="artifact-art manuscript-art"><span>${item.text.replace(/\n/g, '<br>')}</span><i></i><i></i><b>Л.О.</b></div>`;
   if (item.material === 'cover') return `<div class="artifact-art cover-art"><small>ЛЕВ ОРЛОВ</small><strong>${item.text.replace(/\n/g, '<br>')}</strong><em>рассказ</em></div>`;
-  if (item.material === 'image') return `<img class="artifact-art source-image mode-${item.mode || 'framed'}" src="${escapeAttribute(item.image)}" alt="${escapeAttribute(item.caption)}">`;
-  return `<img class="artifact-art source-image" src="${escapeAttribute(item.image)}" alt="${escapeAttribute(item.caption)}">`;
+  const image = typeof item.image === 'object' ? item.image : { src: item.image };
+  if (image.src) return `<img class="artifact-art source-image" src="${escapeAttribute(image.src)}" alt="${escapeAttribute(image.alt || item.caption)}">`;
+  return '';
 }
 
 function escapeAttribute(value = '') { return String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 function escapeText(value = '') { return escapeAttribute(value).replace(/\n/g, '<br>'); }
 
 function cardMarkup(item) {
-  const frame = item.frame ? `frame-${item.frame}` : '';
-  const styles = `left:${item.x}px;top:${item.y}px;width:${cssSize(item.width, '210px')};height:${cssSize(item.height, 'auto')};--ratio:${item.aspectRatio || item.ratio || 'auto'};--frame:${item.frame || '#f3eee1'};--padding:${cssSize(item.framePadding ?? item.padding, '8px')};--fit:${item.fit || 'cover'};--object-position:${item.objectPosition || 'center'};transform:rotate(${item.rotation || 0}deg);z-index:${item.zIndex || 1};`;
-  return `<article class="evidence-card material-${item.material} ${frame} mode-${item.mode || 'framed'}" data-id="${item.id}" tabindex="0" role="link" aria-label="${item.caption || 'Открыть улику'}" style="${styles}">${item.pin ? '<span class="pin" aria-hidden="true"></span>' : ''}${visualMarkup(item)}<div class="artifact-caption"><b>${item.caption || ''}</b><span>${item.meta || ''}</span></div></article>`;
+  const frame = frameConfig(item);
+  const frameClass = item.image || item.material === 'polaroid' ? `frame-enabled frame-${frame.preset} ${safeClasses(frame.className)}` : '';
+  return `<article class="evidence-card material-${item.material} ${frameClass} mode-${item.mode || 'framed'}" data-id="${escapeAttribute(item.id)}" tabindex="0" role="link" aria-label="${escapeAttribute(item.caption || 'Открыть улику')}">${item.pin ? '<span class="pin" aria-hidden="true"></span>' : ''}${visualMarkup(item)}<div class="artifact-caption"><b>${escapeText(item.caption)}</b><span>${escapeText(item.meta)}</span></div></article>`;
 }
 function cssSize(value, fallback) { if (value === undefined || value === null || value === '') return fallback; return typeof value === 'number' ? `${value}px` : String(value); }
+const FRAME_PRESETS = new Set(['plain', 'polaroid', 'photo-frame', 'newspaper', 'file', 'torn']);
+const FRAME_PROPERTIES = { background: 'background', border: 'border', borderRadius: 'borderRadius', padding: 'padding', boxShadow: 'boxShadow', clipPath: 'clipPath', mask: 'mask', opacity: 'opacity' };
+const IMAGE_PROPERTIES = { fit: 'objectFit', objectPosition: 'objectPosition', opacity: 'opacity', filter: 'filter', transform: 'transform' };
+function safeCssValue(value) { const text = String(value ?? ''); return text.length <= 180 && !/[;{}<>]/.test(text) ? text : ''; }
+function safeClasses(value) { return String(value || '').split(/\s+/).filter(name => /^[a-z][a-z0-9_-]*$/i.test(name)).join(' '); }
+function frameConfig(item) {
+  const legacy = item.material === 'polaroid' ? 'polaroid' : item.mode === 'plain' ? 'plain' : item.mode === 'framed' || item.frame ? 'photo-frame' : 'plain';
+  const frame = typeof item.frame === 'object' ? item.frame : { preset: item.frame || legacy };
+  const legacyStyle = typeof item.frame === 'string' && !FRAME_PRESETS.has(item.frame) ? { background: item.frame } : {};
+  return { preset: FRAME_PRESETS.has(frame.preset) ? frame.preset : legacy, className: frame.className || item.frameClass || '', style: { ...legacyStyle, ...(frame.style || {}), ...(item.frameStyle || {}) }, frame };
+}
+function applyStyle(element, properties, values) { Object.entries(properties).forEach(([source, target]) => { const value = safeCssValue(values[source]); if (value) element.style[target] = value; }); }
+function applyCardStyles(card, item) {
+  const frame = frameConfig(item); const image = typeof item.image === 'object' ? { ...item, ...item.image } : item;
+  card.style.left = cssSize(item.x, '0px'); card.style.top = cssSize(item.y, '0px'); card.style.width = cssSize(item.width, '210px'); card.style.height = cssSize(item.height, 'auto'); card.style.zIndex = String(Number(item.zIndex) || 1); card.style.transform = `rotate(${Number(item.rotation) || 0}deg)`;
+  card.style.setProperty('--ratio', safeCssValue(item.aspectRatio || item.ratio || 'auto') || 'auto');
+  card.style.setProperty('--frame', safeCssValue(item.frameColor || (typeof item.frame === 'string' ? item.frame : '#f3eee1')) || '#f3eee1');
+  card.style.setProperty('--padding', cssSize(item.framePadding ?? item.padding, '8px'));
+  applyStyle(card, FRAME_PROPERTIES, { ...frame.style, ...(item.frameStyle || {}) });
+  const source = card.querySelector('.source-image'); if (!source) return;
+  source.style.aspectRatio = safeCssValue(image.aspectRatio || image.ratio || 'auto') || 'auto';
+  applyStyle(source, IMAGE_PROPERTIES, image);
+  source.style.width = '100%'; source.style.height = cssSize(image.height, 'auto');
+}
 
 function drawConnections() {
   const links = LINKS.concat(EVIDENCE.flatMap(item => (item.links || []).map(link => typeof link === 'string' ? { from: item.id, to: link } : { from: item.id, ...link })));
@@ -47,7 +72,7 @@ function drawConnections() {
 }
 
 function watchMaterialSizes() { if (!window.ResizeObserver) return; const observer = new ResizeObserver(drawConnections); cardsLayer.querySelectorAll('.evidence-card').forEach(card => observer.observe(card)); }
-function render() { boardSpace.style.width = `${BOARD.width}px`; boardSpace.style.height = `${BOARD.height}px`; document.documentElement.style.setProperty('--board-color', THEME.board.color); document.documentElement.style.setProperty('--board-texture', THEME.board.texture); document.documentElement.style.setProperty('--board-image', THEME.board.image ? `url('${THEME.board.image}')` : 'none'); document.documentElement.style.setProperty('--board-size', THEME.board.size); document.documentElement.style.setProperty('--reader-background', THEME.reader.background); document.documentElement.style.setProperty('--reader-opacity', THEME.reader.opacity); document.documentElement.style.setProperty('--reader-text-color', THEME.reader.textColor); document.documentElement.style.setProperty('--reader-accent', THEME.reader.accent); document.documentElement.style.setProperty('--reader-width', THEME.reader.width); cardsLayer.innerHTML = EVIDENCE.map(cardMarkup).join(''); drawConnections(); bindCards(); watchMaterialSizes(); cardsLayer.querySelectorAll('img').forEach(image => image.addEventListener('load', drawConnections)); window.addEventListener('resize', drawConnections); updateView(); }
+function render() { boardSpace.style.width = `${BOARD.width}px`; boardSpace.style.height = `${BOARD.height}px`; document.documentElement.style.setProperty('--board-color', THEME.board.color); document.documentElement.style.setProperty('--board-texture', THEME.board.texture); document.documentElement.style.setProperty('--board-image', THEME.board.image ? `url('${THEME.board.image}')` : 'none'); document.documentElement.style.setProperty('--board-size', THEME.board.size); document.documentElement.style.setProperty('--reader-background', THEME.reader.background); document.documentElement.style.setProperty('--reader-opacity', THEME.reader.opacity); document.documentElement.style.setProperty('--reader-text-color', THEME.reader.textColor); document.documentElement.style.setProperty('--reader-accent', THEME.reader.accent); document.documentElement.style.setProperty('--reader-width', THEME.reader.width); cardsLayer.innerHTML = EVIDENCE.map(cardMarkup).join(''); EVIDENCE.forEach(item => applyCardStyles(cardsLayer.querySelector(`[data-id="${item.id}"]`), item)); drawConnections(); bindCards(); watchMaterialSizes(); cardsLayer.querySelectorAll('img').forEach(image => image.addEventListener('load', drawConnections)); window.addEventListener('resize', drawConnections); updateView(); }
 function updateView() { boardSpace.style.transform = `translate(calc(-50% + ${view.x}px), calc(-50% + ${view.y}px)) scale(${view.scale})`; zoomValue.textContent = `${Math.round(view.scale * 100)}%`; }
 function setZoom(next, focalX = boardViewport.clientWidth / 2, focalY = boardViewport.clientHeight / 2) {
   const old = view.scale; view.scale = Math.min(BOARD.maxZoom, Math.max(BOARD.minZoom, next));
