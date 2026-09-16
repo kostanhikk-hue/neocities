@@ -59,7 +59,7 @@ function visualMarkup(item) {
   if (item.material === 'manuscript') return `<div class="artifact-art manuscript-art"><span>${item.text.replace(/\n/g, '<br>')}</span><i></i><i></i><b>Л.О.</b></div>`;
   if (item.material === 'cover') { const labels = currentUI(); return `<div class="artifact-art cover-art"><small>${escapeText(labels.author)}</small><strong>${item.text.replace(/\n/g, '<br>')}</strong><em>${escapeText(labels.story)}</em></div>`; }
   const image = typeof item.image === 'object' ? item.image : { src: item.image };
-  if (image.src) return `<img class="artifact-art source-image" src="${escapeAttribute(image.src)}" alt="${escapeAttribute(image.alt || item.caption)}">`;
+  if (image.src) return `<img class="artifact-art source-image" src="${escapeAttribute(image.src)}" alt="${escapeAttribute(image.alt || item.caption)}" draggable="false">`;
   return '';
 }
 
@@ -139,9 +139,11 @@ document.querySelector('#zoomIn').addEventListener('click', () => setZoom(view.s
 document.querySelector('#zoomOut').addEventListener('click', () => setZoom(view.scale - .1));
 document.querySelector('#resetView').addEventListener('click', resetView);
 boardViewport.addEventListener('wheel', event => { event.preventDefault(); setZoom(view.scale + (event.deltaY < 0 ? .08 : -.08), event.offsetX, event.offsetY); }, { passive: false });
-boardViewport.addEventListener('pointerdown', event => { if (event.target.closest('.evidence-card')) return; view.dragging = true; view.moved = false; view.startX = event.clientX; view.startY = event.clientY; view.originX = view.x; view.originY = view.y; boardViewport.classList.add('is-dragging'); boardViewport.setPointerCapture(event.pointerId); });
-boardViewport.addEventListener('pointermove', event => { if (!view.dragging) return; const dx = event.clientX - view.startX; const dy = event.clientY - view.startY; view.moved = Math.abs(dx) + Math.abs(dy) > 5; view.x = view.originX + dx; view.y = view.originY + dy; updateView(); });
+boardViewport.addEventListener('pointerdown', event => { if (event.target.closest('.evidence-card')) return; event.preventDefault(); view.dragging = true; view.moved = false; view.startX = event.clientX; view.startY = event.clientY; view.originX = view.x; view.originY = view.y; boardViewport.classList.add('is-dragging'); boardViewport.setPointerCapture(event.pointerId); });
+boardViewport.addEventListener('pointermove', event => { if (!view.dragging) return; event.preventDefault(); const dx = event.clientX - view.startX; const dy = event.clientY - view.startY; view.moved = Math.abs(dx) + Math.abs(dy) > 5; view.x = view.originX + dx; view.y = view.originY + dy; updateView(); });
 boardViewport.addEventListener('pointerup', event => { view.dragging = false; boardViewport.classList.remove('is-dragging'); boardViewport.releasePointerCapture(event.pointerId); setTimeout(() => { view.moved = false; }, 0); });
+boardViewport.addEventListener('pointercancel', event => { view.dragging = false; boardViewport.classList.remove('is-dragging'); boardViewport.releasePointerCapture(event.pointerId); });
+boardViewport.addEventListener('dragstart', event => event.preventDefault());
 boardViewport.addEventListener('keydown', event => { if (event.key.toLowerCase() === 'r') resetView(); if (event.key === '+' || event.key === '=') setZoom(view.scale + .1); if (event.key === '-') setZoom(view.scale - .1); });
 readerPanel.querySelectorAll('[data-reader-close]').forEach(element => element.addEventListener('click', closeReader));
 document.addEventListener('keydown', event => { if (event.key === 'Escape' && readerPanel.classList.contains('is-open')) closeReader(); });
