@@ -114,8 +114,9 @@ function drawConnections() {
     const a = EVIDENCE.find(item => item.id === from); const b = EVIDENCE.find(item => item.id === to);
     if (!a || !b) return '';
     const point = (item, anchor, custom) => { const p = custom || (item.anchors && item.anchors[anchor]); const element = cardsLayer.querySelector(`[data-id="${item.id}"]`); const width = element ? element.offsetWidth : (item.width || 210); const height = element ? element.offsetHeight : 90; return p ? [item.x + width * p[0], item.y + height * p[1]] : [item.x + width / 2, item.y + height / 2]; };
-    const [ax, ay] = point(a, fromAnchor, fromPoint); const [bx, by] = point(b, toAnchor, toPoint); const bend = sag ?? (index % 3 === 0 ? 78 : index % 2 ? -58 : 42); const dx = bx - ax; const dy = by - ay; const length = Math.max(70, Math.hypot(dx, dy) * .32); const direction = dx >= 0 ? 1 : -1;
-    return `<path class="connection" d="M ${ax} ${ay} C ${ax + direction * length} ${ay + bend}, ${bx - direction * length} ${by + bend}, ${bx} ${by}" />`;
+    const [ax, ay] = point(a, fromAnchor, fromPoint); const [bx, by] = point(b, toAnchor, toPoint); const dx = bx - ax; const dy = by - ay; const distance = Math.hypot(dx, dy); const bend = sag ?? Math.min(118, Math.max(30, distance * .16)); const controlSag = bend * 1.35; const controlDistance = Math.max(42, distance * .28); const tone = ['#71323c', '#67303a', '#783843'][index % 3];
+    const path = `M ${ax} ${ay} C ${ax + (dx / distance) * controlDistance} ${ay + (dy / distance) * controlDistance + controlSag}, ${bx - (dx / distance) * controlDistance} ${by - (dy / distance) * controlDistance + controlSag}, ${bx} ${by}`;
+    return `<path class="connection-shadow" d="${path}" /><path class="connection" style="--thread-color:${tone}" d="${path}" /><path class="connection-highlight" d="${path}" />`;
   }).join('');
 }
 
