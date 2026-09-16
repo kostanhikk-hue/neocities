@@ -110,7 +110,7 @@ frame: {
 language: { storageKey: 'archive-language', default: 'ru' }
 ```
 
-Для перевода любого текстового поля используйте объект `{ ru: '...', en: '...' }`. Поддерживаются `text`, `caption`, `meta`, `href`, `readerTitle`, `readerByline`, `readerBody`, `readerText`, `readerMeta`, а также `image.alt` и `readerCover`:
+Для перевода любого текстового поля используйте объект `{ ru: '...', en: '...' }`. Поддерживаются `text`, `caption`, `meta`, `alt`, `href`, `readerTitle`, `readerByline`, `readerBody`, `readerText`, `readerMeta`, а также локализованные `image` и `readerCover`:
 
 ```js
 {
@@ -127,6 +127,48 @@ language: { storageKey: 'archive-language', default: 'ru' }
 ```
 
 При выборе языка renderer сначала берёт соответствующее значение, затем `ru`, затем `en`. Поэтому старые строки остаются рабочими, а неполный перевод безопасно отображает доступный вариант. В режиме `reader: 'panel'` переводятся inline cover/title/byline/body и ссылка на отдельную страницу. В режиме `reader: 'page'` используется локализованный `href`; подготовьте соответствующий HTML-файл рассказа для каждого языка.
+
+### Как добавить русскую и английскую обложки без программирования
+
+1. В панели файлов проекта создайте папку `images` рядом с `index.html` и положите туда два файла, например `open-door-ru.jpg` и `open-door-en.jpg`. Имена могут быть другими, но используйте латиницу без пробелов. Для газетной вырезки, фотографии или другой картинки действуют те же правила.
+2. Откройте `board-data.js` в простом текстовом редакторе и добавьте один объект в массив `evidence` (или найдите существующий объект и замените только нужные поля).
+3. Для карточки укажите `image` как объект с двумя языками. Внутри каждого языка обязательный `src` — путь к файлу от корня сайта, а `alt` — короткое описание для доступности:
+
+```js
+{
+  id: 'open-door-cover',
+  material: 'image',
+  image: {
+    ru: { src: 'images/open-door-ru.jpg', alt: 'Русская обложка «Открытая дверь»' },
+    en: { src: 'images/open-door-en.jpg', alt: 'English cover of The Open Door' }
+  },
+  caption: { ru: 'Обложка рассказа', en: 'Story cover' },
+  meta: { ru: 'русская версия', en: 'English version' },
+  href: { ru: 'stories/open-door.html', en: 'stories/open-door-en.html' },
+  x: 560, y: 260, width: 220, height: 160,
+  frame: { preset: 'photo-frame' },
+  fit: 'cover', objectPosition: 'center', pin: true
+}
+```
+
+4. Если у материала используется встроенное чтение (`reader: 'panel'`), добавьте обложку reader по той же схеме. Здесь `image` может быть строкой или объектом `{ ru: { image, alt }, en: { image, alt } }`:
+
+```js
+reader: 'panel',
+readerCover: {
+  ru: { image: 'images/open-door-reader-ru.jpg', alt: 'Обложка рассказа на русском' },
+  en: { image: 'images/open-door-reader-en.jpg', alt: 'English story cover' },
+  width: '100%', height: '220px', fit: 'cover', objectPosition: 'center'
+},
+readerTitle: { ru: 'Открытая дверь', en: 'The Open Door' },
+readerBody: { ru: 'Русский текст.', en: 'English text.' }
+```
+
+5. Проверьте, что запятые между полями и объектами стоят как в шаблоне. Не меняйте `script.js`, CSS, `material`, `frame` или координаты, если хотите сохранить текущий вид. `polaroid`, `newspaper`, `file`, `torn` и обычная картинка работают с той же схемой `image`.
+6. Локально откройте корень проекта через `python3 -m http.server 4173`, затем перейдите на `http://localhost:4173/index.html`. Выберите русский, убедитесь, что открывается файл с суффиксом `-ru`, очистите сохранённый язык, выберите English и убедитесь, что меняются `src`, `alt`, подпись и ссылка на `-en.html`. Для проверки сохранённого выбора удалите `archive-language` в DevTools и выберите язык заново.
+7. На Neocities загрузите `index.html`, `styles.css`, `script.js`, `board-data.js`, папки `images/` и `stories/`, включая оба файла обложки и обе HTML-страницы. Откройте опубликованный адрес и повторите проверку переключения языка.
+
+Если английский `src` не указан или файл ещё не загружен, сайт сначала использует русскую версию, а затем любую доступную версию. Если отсутствует и русская, карточка использует английскую. Для reader cover применяется тот же порядок; сама карточка и reader не ломаются, но лучше загрузить обе картинки до публикации.
 
 Данные интерфейса (`zoom`, подсказки, кнопки reader и language screen) находятся в `BOARD_DATA.ui.ru` и `BOARD_DATA.ui.en`. Для сброса сохранённого выбора удалите ключ `archive-language` в DevTools или вызовите `localStorage.removeItem('archive-language')`.
 
