@@ -171,6 +171,93 @@ readerBody: { ru: 'Русский текст.', en: 'English text.' }
 
 Если английский `src` не указан или файл ещё не загружен, сайт сначала использует русскую версию, а затем любую доступную версию. Если отсутствует и русская, карточка использует английскую. Для reader cover применяется тот же порядок; сама карточка и reader не ломаются, но лучше загрузить обе картинки до публикации.
 
+## Пошаговая настройка размеров и оформления материалов
+
+Эта схема предназначена для администратора, который меняет только данные и не пишет JavaScript. Сборка не нужна: сохраните `board-data.js`, обновите страницу и при публикации загрузите обычные статические файлы на Neocities.
+
+У каждого объекта в `evidence` есть два уровня размера:
+
+- `width` и `height` — размер внешней карточки на доске;
+- `card` — настройки внешнего контейнера: `width`, `height`, `padding`, `minHeight`, `maxHeight`, `overflow`, `boxSizing`, `background`, `border`, `borderRadius`, `boxShadow`, `opacity`;
+- `content` — размер и оформление внутреннего artwork: `width`, `height`, `padding`, `minHeight`, `maxHeight`, `overflow`, `boxSizing`, `background`, `border`, `borderRadius`, `boxShadow`, `textAlign`, `fontSize`, `lineHeight`, `letterSpacing`, `opacity`.
+
+`card` и `content` необязательны. Если их нет, старые поля и прежний CSS остаются в силе. Числа размеров считаются пикселями; значения с `;`, `{}`, `<` и `>` отбрасываются renderer-ом.
+
+### Газетная вырезка
+
+```js
+{
+  id: 'short-clipping', material: 'clipping',
+  text: 'ЗАГОЛОВОК\\n\\nТекст вырезки.',
+  x: 300, y: 500, width: 260,
+  card: { height: 180, padding: 6, overflow: 'hidden' },
+  content: {
+    height: 142, padding: '9px 12px', overflow: 'hidden',
+    fontSize: '14px', lineHeight: '1.1', textAlign: 'left'
+  },
+  pin: true
+}
+```
+
+Увеличьте `card.height` и `content.height`, если текст обрезается; уменьшите `fontSize` или `lineHeight`, если нужна более компактная вырезка. `overflow: 'hidden'` предотвращает выход текста за границы, а `overflow: 'visible'` оставляет видимое переполнение.
+
+### Скотч и label
+
+```js
+{
+  id: 'blue-tape', material: 'tape',
+  text: 'ПРОВЕРИТЬ', color: '#d4bd77', texture: 'paper',
+  x: 820, y: 35, width: 220,
+  card: { height: 48, padding: 0 },
+  content: {
+    height: 36, padding: '9px 14px',
+    textAlign: 'center', fontSize: '11px', lineHeight: '1'
+  },
+  pin: { size: 10, offsetX: '2px', offsetY: '-1px' }
+}
+```
+
+У tape/label `color` и `texture` остаются отдельными полями. `fibers`, `grain` и `paper` — готовые текстуры. Размер и выравнивание конкретной полоски задаются через `card` и `content`, поэтому соседние материалы не меняются.
+
+### Изображение или polaroid
+
+```js
+{
+  id: 'portrait', material: 'image',
+  image: {
+    src: 'images/portrait.jpg', alt: 'Портрет',
+    fit: 'contain', objectPosition: 'center', height: '210px'
+  },
+  width: '170px', height: '240px',
+  frame: { preset: 'photo-frame' },
+  card: { padding: '8px', boxSizing: 'border-box' },
+  content: { height: '210px', boxSizing: 'border-box' },
+  pin: true
+}
+```
+
+Для изображения `image.height` управляет самим `<img>`, а `content.height` — внутренним контейнером. Старые `image`, `frame`, `ratio`, `fit`, `objectPosition`, `padding` и `framePadding` по-прежнему поддерживаются. Для `polaroid` эти же поля задают область фотографии, а подпись остаётся в нижнем поле рамки.
+
+### Рукопись, marker и cover
+
+Для этих материалов применяются те же `width`, `height`, `card` и `content`. Например, `content.fontSize`, `content.lineHeight`, `content.letterSpacing` и `content.textAlign` меняют типографику конкретной заметки, а `content.overflow: 'hidden'` помогает не выпускать длинный текст за пределы листа. Встроенные `frame`/`frameStyle` и пресеты (`plain`, `polaroid`, `photo-frame`, `newspaper`, `file`, `torn`) можно комбинировать с этими настройками.
+
+### Булавка, связи и ссылки
+
+Старый `pin: true/false` остаётся рабочим. Для конкретной булавки можно использовать объект `{ size, offsetX, offsetY, background, border, borderColor, boxShadow }`. `id` должен оставаться уникальным: все пары в глобальном `links`, `item.links`, `fromAnchor` и `toAnchor` ссылаются именно на него. Изменение `id` без обновления связей уберёт соответствующую нить.
+
+Не заменяйте локализованные поля объектами только на одном языке без причины: для RU/EN используйте `{ ru: '...', en: '...' }` для `text`, `caption`, `meta`, `href`, reader-полей и изображений. Размеры и оформление общие для языков, а тексты и `src` могут быть локальными.
+
+### Проверка без сборки
+
+1. Запустите в корне проекта `python3 -m http.server 4173`.
+2. Откройте `http://localhost:4173/index.html`, выберите русский язык и проверьте все типы материалов, клики, reader, панорамирование и масштаб.
+3. Удалите `archive-language` в DevTools или вызовите `localStorage.removeItem('archive-language')`, затем выберите English и проверьте переводы, изображения и `-en.html` ссылки.
+4. В DevTools включите мобильный viewport до `700px`: проверьте pan/zoom, reader и отсутствие горизонтального overflow страницы.
+5. Загрузите `index.html`, `styles.css`, `script.js`, `board-data.js`, `README.md`, `images/` и `stories/` на Neocities. Сборка, npm и внешние зависимости не нужны.
+
+Если карточка кликается, но выглядит неверно, сначала проверьте `id`, `href`, запятые в объекте и соотношение `card.height`/`content.height`. Не вставляйте HTML или JavaScript в data-поля: renderer принимает только текст и whitelist-стили.
+
 Данные интерфейса (`zoom`, подсказки, кнопки reader и language screen) находятся в `BOARD_DATA.ui.ru` и `BOARD_DATA.ui.en`. Для сброса сохранённого выбора удалите ключ `archive-language` в DevTools или вызовите `localStorage.removeItem('archive-language')`.
 
 ## Размеры материалов

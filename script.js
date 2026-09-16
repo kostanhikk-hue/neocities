@@ -62,11 +62,11 @@ document.querySelectorAll('[data-language]').forEach(button => button.addEventLi
 
 function visualMarkup(item) {
   item = localizedItem(item);
-  if (item.material === 'tape' || item.material === 'label') return `<div class="artifact-art tape-art texture-${item.texture || 'paper'}" style="--tape-color:${item.color || '#b18b4a'}"><span>${escapeText(item.text)}</span></div>`;
-  if (item.material === 'marker') return `<div class="artifact-art marker-art"><strong>${item.text.replace(/\n/g, '<br>')}</strong></div>`;
-  if (item.material === 'clipping') return `<div class="artifact-art clipping-art"><strong>${item.text.replace(/\n/g, '<br>')}</strong><i></i><i></i><i></i></div>`;
-  if (item.material === 'manuscript') return `<div class="artifact-art manuscript-art"><span>${item.text.replace(/\n/g, '<br>')}</span><i></i><i></i><b>${language === 'en' ? 'L.O.' : 'Л.О.'}</b></div>`;
-  if (item.material === 'cover') { const labels = currentUI(); return `<div class="artifact-art cover-art"><small>${escapeText(labels.author)}</small><strong>${item.text.replace(/\n/g, '<br>')}</strong><em>${escapeText(labels.story)}</em></div>`; }
+  if (item.material === 'tape' || item.material === 'label') return `<div class="artifact-art tape-art texture-${safeClasses(item.texture || 'paper')}" style="--tape-color:${safeCssValue(item.color || '#b18b4a') || '#b18b4a'}"><span>${escapeText(item.text)}</span></div>`;
+  if (item.material === 'marker') return `<div class="artifact-art marker-art"><strong>${escapeText(item.text)}</strong></div>`;
+  if (item.material === 'clipping') return `<div class="artifact-art clipping-art"><strong>${escapeText(item.text)}</strong><i></i><i></i><i></i></div>`;
+  if (item.material === 'manuscript') return `<div class="artifact-art manuscript-art"><span>${escapeText(item.text)}</span><i></i><b>${language === 'en' ? 'L.O.' : 'Л.О.'}</b></div>`;
+  if (item.material === 'cover') { const labels = currentUI(); return `<div class="artifact-art cover-art"><small>${escapeText(labels.author)}</small><strong>${escapeText(item.text)}</strong><em>${escapeText(labels.story)}</em></div>`; }
   const image = typeof item.image === 'object' ? item.image : { src: item.image };
   if (image.src) return `<img class="artifact-art source-image" src="${escapeAttribute(image.src)}" alt="${escapeAttribute(image.alt || item.alt || item.caption)}" draggable="false">`;
   return '';
@@ -78,33 +78,53 @@ function escapeText(value = '') { return escapeAttribute(value).replace(/\n/g, '
 function cardMarkup(item) {
   item = localizedItem(item);
   const frame = frameConfig(item);
-  const frameClass = item.image || item.material === 'polaroid' ? `frame-enabled frame-${frame.preset} ${safeClasses(frame.className)}` : '';
-  return `<article class="evidence-card material-${item.material} ${frameClass} mode-${item.mode || 'framed'}" data-id="${escapeAttribute(item.id)}" tabindex="0" role="link" aria-label="${escapeAttribute(item.caption || 'Открыть улику')}">${item.pin ? '<span class="pin" aria-hidden="true"></span>' : ''}${visualMarkup(item)}<div class="artifact-caption"><b>${escapeText(item.caption)}</b><span>${escapeText(item.meta)}</span></div></article>`;
+  const frameClass = item.frame || item.frameClass || item.frameStyle || item.image || item.material === 'polaroid' ? `frame-enabled frame-${frame.preset} ${safeClasses(frame.className)}` : '';
+  const hasPin = Boolean(item.pin);
+  return `<article class="evidence-card material-${item.material} ${frameClass} mode-${item.mode || 'framed'}" data-id="${escapeAttribute(item.id)}" tabindex="0" role="link" aria-label="${escapeAttribute(item.caption || 'Открыть улику')}">${hasPin ? '<span class="pin" aria-hidden="true"></span>' : ''}${visualMarkup(item)}<div class="artifact-caption"><b>${escapeText(item.caption)}</b><span>${escapeText(item.meta)}</span></div></article>`;
 }
 function cssSize(value, fallback) { if (value === undefined || value === null || value === '') return fallback; return typeof value === 'number' ? `${value}px` : String(value); }
 const FRAME_PRESETS = new Set(['plain', 'polaroid', 'photo-frame', 'newspaper', 'file', 'torn']);
+const CARD_PROPERTIES = { background: 'background', border: 'border', borderRadius: 'borderRadius', boxShadow: 'boxShadow', padding: 'padding', minHeight: 'minHeight', maxHeight: 'maxHeight', overflow: 'overflow', boxSizing: 'boxSizing', opacity: 'opacity' };
+const CONTENT_PROPERTIES = { background: 'background', border: 'border', borderRadius: 'borderRadius', boxShadow: 'boxShadow', padding: 'padding', width: 'width', height: 'height', minHeight: 'minHeight', maxHeight: 'maxHeight', overflow: 'overflow', boxSizing: 'boxSizing', textAlign: 'textAlign', fontSize: 'fontSize', lineHeight: 'lineHeight', letterSpacing: 'letterSpacing', opacity: 'opacity' };
 const FRAME_PROPERTIES = { background: 'background', border: 'border', borderRadius: 'borderRadius', padding: 'padding', boxShadow: 'boxShadow', clipPath: 'clipPath', mask: 'mask', opacity: 'opacity' };
 const IMAGE_PROPERTIES = { fit: 'objectFit', objectPosition: 'objectPosition', opacity: 'opacity', filter: 'filter', transform: 'transform' };
+const PIN_VARIABLES = { size: '--pin-size', offsetX: '--pin-offset-x', offsetY: '--pin-offset-y' };
+const PIN_PROPERTIES = { background: 'background', border: 'border', borderColor: 'borderColor', boxShadow: 'boxShadow' };
 function safeCssValue(value) { const text = String(value ?? ''); return text.length <= 180 && !/[;{}<>]/.test(text) ? text : ''; }
 function safeClasses(value) { return String(value || '').split(/\s+/).filter(name => /^[a-z][a-z0-9_-]*$/i.test(name)).join(' '); }
+const CSS_SIZE_PROPERTIES = new Set(['width', 'height', 'minWidth', 'maxWidth', 'minHeight', 'maxHeight', 'padding', 'borderRadius', 'fontSize', 'letterSpacing']);
 function frameConfig(item) {
   const legacy = item.material === 'polaroid' ? 'polaroid' : item.mode === 'plain' ? 'plain' : item.mode === 'framed' || item.frame ? 'photo-frame' : 'plain';
   const frame = typeof item.frame === 'object' ? item.frame : { preset: item.frame || legacy };
   const legacyStyle = typeof item.frame === 'string' && !FRAME_PRESETS.has(item.frame) ? { background: item.frame } : {};
   return { preset: FRAME_PRESETS.has(frame.preset) ? frame.preset : legacy, className: frame.className || item.frameClass || '', style: { ...legacyStyle, ...(frame.style || {}), ...(item.frameStyle || {}) }, frame };
 }
-function applyStyle(element, properties, values) { Object.entries(properties).forEach(([source, target]) => { const value = safeCssValue(values[source]); if (value) element.style[target] = value; }); }
+function applyStyle(element, properties, values) { Object.entries(properties).forEach(([source, target]) => { const raw = values[source]; const value = safeCssValue(CSS_SIZE_PROPERTIES.has(target) ? cssSize(raw, '') : raw); if (value) element.style[target] = value; }); }
+function applyVariableStyle(element, properties, values) { Object.entries(properties).forEach(([source, target]) => { const value = safeCssValue(values[source]); if (value) element.style.setProperty(target, cssSize(value, value)); }); }
+function applyContentStyles(content, item) {
+  if (!content) return;
+  applyStyle(content, CONTENT_PROPERTIES, item.content || {});
+  const textProperties = { fontSize: 'fontSize', lineHeight: 'lineHeight', letterSpacing: 'letterSpacing', textAlign: 'textAlign' };
+  content.querySelectorAll('strong, span, b, small, em').forEach(element => applyStyle(element, textProperties, item.content || {}));
+}
 function applyCardStyles(card, item) {
   const frame = frameConfig(item); const image = typeof item.image === 'object' ? { ...item, ...item.image } : item;
-  card.style.left = cssSize(item.x, '0px'); card.style.top = cssSize(item.y, '0px'); card.style.width = cssSize(item.width, '210px'); card.style.height = cssSize(item.height, 'auto'); card.style.zIndex = String(Number(item.zIndex) || 1); card.style.transform = `rotate(${Number(item.rotation) || 0}deg)`;
+  const cardConfig = item.card || {};
+  card.style.left = cssSize(item.x, '0px'); card.style.top = cssSize(item.y, '0px'); card.style.width = cssSize(cardConfig.width ?? item.width, '210px'); card.style.height = cssSize(cardConfig.height ?? item.height, 'auto'); card.style.zIndex = String(Number(item.zIndex) || 1); card.style.transform = `rotate(${Number(item.rotation) || 0}deg)`;
+  applyStyle(card, CARD_PROPERTIES, cardConfig);
   card.style.setProperty('--ratio', safeCssValue(item.aspectRatio || item.ratio || 'auto') || 'auto');
   card.style.setProperty('--frame', safeCssValue(item.frameColor || (typeof item.frame === 'string' ? item.frame : '#f3eee1')) || '#f3eee1');
   card.style.setProperty('--padding', cssSize(item.framePadding ?? item.padding, '8px'));
   applyStyle(card, FRAME_PROPERTIES, { ...frame.style, ...(item.frameStyle || {}) });
-  const source = card.querySelector('.source-image'); if (!source) return;
-  source.style.aspectRatio = safeCssValue(image.aspectRatio || image.ratio || 'auto') || 'auto';
-  applyStyle(source, IMAGE_PROPERTIES, image);
-  source.style.width = '100%'; source.style.height = cssSize(image.height, 'auto');
+  const content = card.querySelector('.artifact-art'); applyContentStyles(content, item);
+  const source = card.querySelector('.source-image');
+  if (source) {
+    source.style.aspectRatio = safeCssValue(image.aspectRatio || image.ratio || 'auto') || 'auto';
+    applyStyle(source, IMAGE_PROPERTIES, image);
+    source.style.width = cssSize(item.content?.width, '100%'); source.style.height = cssSize(typeof item.image === 'object' ? (item.image.height ?? item.content?.height ?? item.height) : (item.content?.height ?? item.height), 'auto');
+  }
+  const pin = card.querySelector('.pin');
+  if (pin && typeof item.pin === 'object') { applyVariableStyle(pin, PIN_VARIABLES, item.pin); applyStyle(pin, PIN_PROPERTIES, item.pin); }
 }
 
 function drawConnections() {

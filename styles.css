@@ -72,3 +72,8 @@ main { max-width: none; padding: 0; }
 .frame-enabled.frame-torn { padding: 10px; background: #ede4cf; filter: drop-shadow(4px 7px 5px rgba(15,26,23,.38)); clip-path: polygon(0 2%, 9% 0, 19% 2%, 31% 0, 44% 2%, 57% 0, 72% 2%, 86% 0, 100% 2%, 98% 98%, 86% 100%, 70% 98%, 55% 100%, 38% 98%, 22% 100%, 8% 98%, 0 100%); }
 .frame-enabled .source-image { display: block; width: 100%; aspect-ratio: var(--ratio, auto); object-fit: var(--fit, cover); object-position: var(--object-position, center); }
 @media (max-width: 700px) { .reader-drawer { width: calc(100vw - 20px); max-height: calc(100vh - 20px); padding: 48px 24px 36px; }.reader-text { font-size: 17px; line-height: 1.65; }.reader-drawer h2 { font-size: clamp(42px, 14vw, 68px); } }
+
+/* Optional per-item card/content/pin overrides are applied by script.js. */
+.evidence-card { box-sizing: border-box; }
+.evidence-card .artifact-art { box-sizing: border-box; }
+.evidence-card .pin { width: var(--pin-size, 13px); height: var(--pin-size, 13px); left: calc(50% + var(--pin-offset-x, 0px)); top: calc(-7px + var(--pin-offset-y, 0px)); }
